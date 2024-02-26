@@ -35,8 +35,8 @@ class _LoginPageState extends State<LoginPage> {
       // 로그인이 성공한 경우
       if (user != null) {
         // 아이디, 비밀번호 확인 및 메인 페이지로 이동
+
         if (loginId == user.loginId && password == user.password) {
-          print(loginId + password);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -47,26 +47,32 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           // 로그인 실패 시 (Snackbar통해서 사용자에게 피드백 표시)
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('로그인 실패. 아이디와 비밀번호를 확인하세요.'),
-            ));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('로그인 실패. 아이디와 비밀번호를 확인하세요.'),
+              ),
+            );
           }
         }
       } else {
         // API 통신 실패 시
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('로그인 중 오류가 발생했습니다. 다시 시도하세요.'),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('로그인 중 오류가 발생했습니다. 다시 시도하세요.'),
+            ),
+          );
         }
       }
     } catch (e) {
       // 다른 오류 처리
       print('로그인 중 오류 발생: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('로그인 중 오류가 발생했습니다. 다시 시도하세요.'),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('로그인 중 오류가 발생했습니다. 다시 시도하세요.'),
+          ),
+        );
       }
     }
   }

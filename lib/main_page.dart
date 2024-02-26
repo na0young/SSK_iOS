@@ -97,7 +97,7 @@ class _mainPageState extends State<mainPage> {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      '   최근 기록 시간 : 00/00 00:00',
+                      '   최근 기록 시간 : 2024-01-17 13:31',
                       style: TextStyle(fontSize: 20, color: Colors.black),
                     ),
                   ],

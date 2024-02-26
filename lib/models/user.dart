@@ -27,6 +27,7 @@ class User {
         "password": password,
         "name": name,
       };
+
   void logout() {
     // 로그아웃을 위한 앱내변수 삭제
     loginId = null;
