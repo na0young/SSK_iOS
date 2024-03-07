@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:ssk/notification.dart';
 import 'package:ssk/service/api_service.dart';
 import 'package:ssk/models/user.dart';
 import 'package:ssk/main_page.dart';
+import 'package:ssk/notification.dart';
 
 void main() {
   runApp(
@@ -79,6 +81,10 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    // 알림 초기화
+    initNotification(context);
+    showNotifications2();
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(

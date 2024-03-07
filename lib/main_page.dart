@@ -4,10 +4,15 @@ import 'package:ssk/webview.dart';
 import 'package:ssk/models/user.dart';
 import 'package:ssk/models/esm_test_log.dart';
 import 'package:ssk/service/api_service.dart';
+import 'package:ssk/notification.dart';
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // 앱 로드시 알림 초기화
+    initNotification(context);
+    showNotifications2();
+
     User user = User(name: "사용자");
     return MaterialApp(
       home: mainPage(user: user),
@@ -45,7 +50,6 @@ class _mainPageState extends State<mainPage> {
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: Text(
-              //'OO님', // 사용자 이름
               '${widget.user.name}님',
               style: TextStyle(fontSize: 20.0),
             ),

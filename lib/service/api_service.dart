@@ -15,7 +15,7 @@ import '../models/user.dart';
 
 class ApiService {
   final dio = Dio(BaseOptions(
-      baseUrl: 'http://220.69.171.39:8080/SSK/',
+      baseUrl: 'http://210.125.94.105:9090/SSK/',
       headers: {
         "Content-Type": "application/json;charset=UTF-8",
         "Accept": "application/json",
