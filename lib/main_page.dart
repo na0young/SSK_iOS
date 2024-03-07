@@ -30,6 +30,12 @@ class mainPage extends StatefulWidget {
 
 class _mainPageState extends State<mainPage> {
   bool isNotificationOn = true;
+  @override
+  void initState() {
+    super.initState();
+    showNotifications2();
+  }
+
   void _logout() {
     //user 지우기
     widget.user.logout();

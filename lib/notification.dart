@@ -53,18 +53,22 @@ showNotifications2() async {
     2,
     '정서반복기록검사',
     '검사 할 시간입니다.',
-    makeDate(17, 50, 00),
+    makeDate(21, 27, 00),
     NotificationDetails(iOS: iosDetails),
     uiLocalNotificationDateInterpretation:
         UILocalNotificationDateInterpretation.absoluteTime,
   );
+  print("Notification scheduled for 21:27:00");
 }
 
 makeDate(hour, min, sec) {
   var now = tz.TZDateTime.now(tz.local);
-  var when =
-      tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, min, sec);
-  if (when.isBefore(now)) {
+  var koreaTimeZone = tz.getLocation("Asia/Seoul");
+  var koreaNow = tz.TZDateTime.now(koreaTimeZone);
+
+  var when = tz.TZDateTime(
+      koreaTimeZone, now.year, now.month, now.day, hour, min, sec);
+  if (when.isBefore(koreaNow)) {
     return when.add(Duration(days: 1));
   } else {
     return when;

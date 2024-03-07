@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     // 알림 초기화
     initNotification(context);
-    showNotifications2();
+    //showNotifications2();
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
