@@ -30,10 +30,37 @@ class mainPage extends StatefulWidget {
 
 class _mainPageState extends State<mainPage> {
   bool isNotificationOn = true;
+  String recentRecordTime = "";
   @override
   void initState() {
     super.initState();
+    // 최근 기록 시간을 얻기 위해 API 호출
+    getRecentRecordTime();
     showNotifications2();
+  }
+
+  void getRecentRecordTime() async {
+    try {
+      // ApiService 인스턴스 생성
+      final ApiService apiService = ApiService();
+      // ApiService의 postEsmTestLog 호출
+      EsmTestLog esmTestLog = await apiService.postEsmTestLog(widget.user.id!);
+      // 최근 기록 시간이 있는 경우
+      if (esmTestLog.date != "-" && esmTestLog.time != "-") {
+        setState(() {
+          recentRecordTime =
+              '   최근 기록 시간 : ${esmTestLog.date} ${esmTestLog.time}';
+        });
+      } else {
+        // 최근 기록 시간이 없는 경우
+        setState(() {
+          recentRecordTime = '   최근 기록 시간 : ---';
+        });
+      }
+    } catch (error) {
+      // API 통신 실패시
+      print('최근 기록 시간을 가져오는 중 오류 발생: $error');
+    }
   }
 
   void _logout() {
@@ -107,7 +134,7 @@ class _mainPageState extends State<mainPage> {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      '   최근 기록 시간 : 2024-01-17 13:31',
+                      recentRecordTime,
                       style: TextStyle(fontSize: 20, color: Colors.black),
                     ),
                   ],

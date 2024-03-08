@@ -65,14 +65,9 @@ class ApiService {
   }
 
   /* -- POST /esmTestLog */
-  Future<EsmTestLog> postEsmTestLog(
-      int id, String currDate, String currTime) async {
+  Future<EsmTestLog> postEsmTestLog(int id) async {
     // body data
-    Map data = {
-      "id": id,
-      "currDate": currDate,
-      "currTime": currTime,
-    };
+    Map data = {"id": id};
 
     // encode Map to JSON
     var body = jsonEncode(data);

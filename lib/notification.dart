@@ -53,12 +53,12 @@ showNotifications2() async {
     2,
     '정서반복기록검사',
     '검사 할 시간입니다.',
-    makeDate(21, 27, 00),
+    makeDate(14, 07, 00),
     NotificationDetails(iOS: iosDetails),
     uiLocalNotificationDateInterpretation:
         UILocalNotificationDateInterpretation.absoluteTime,
   );
-  print("Notification scheduled for 21:27:00");
+  print("Notification scheduled for 13:42:00");
 }
 
 makeDate(hour, min, sec) {
