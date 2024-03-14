@@ -41,7 +41,11 @@ class ApiService {
     String message = response.data["message"];
     Map<String, dynamic> responseData = response.data["user"];
 
+    // 서버 응답에서 알람시간 추출
+    List<String> alarmTimes = response.data["esmAlarms"]?.cast<String>();
     User user = User.fromJson(responseData);
+
+    // TODO user.alarmTimes = alarmTimes; 알람 시간을 위한 새로운 객체를 만들기 .. ?
 
     /* DEBUG CONSOLE 확인*/
     debugPrint("-- POST /user");
@@ -49,6 +53,7 @@ class ApiService {
     debugPrint("message : $message");
     debugPrint("userLoginId : ${user.loginId}");
     debugPrint("userPassword : ${user.password}");
+    debugPrint("alarmTimes : $alarmTimes");
 
     /*TODO statusCode 따른 예외 처리
      * statusCode == 200 : 통신 성공

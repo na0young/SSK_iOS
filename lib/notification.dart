@@ -1,5 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ssk/models/user.dart';
 import 'package:ssk/webview.dart';
+import 'package:ssk/service/api_service.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -39,26 +41,46 @@ showNotification() async {
 }
 
 // 시간 기능 추가된 알림
-showNotifications2() async {
-  // 시간 관련 함수 사용 시 있어야 하는 코드
-  tz.initializeTimeZones();
+showNotifications2(String loginId, String password) async {
+  // API 인스턴스 생성
+  final ApiService apiService = ApiService();
 
-  var iosDetails = const DarwinNotificationDetails(
-    presentAlert: true,
-    presentBadge: true,
-    presentSound: true,
-  );
-  // 특정 시간 알림
-  notifications.zonedSchedule(
-    2,
-    '정서반복기록검사',
-    '검사 할 시간입니다.',
-    makeDate(14, 07, 00),
-    NotificationDetails(iOS: iosDetails),
-    uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime,
-  );
-  print("Notification scheduled for 13:42:00");
+  // API를 통해 알람 시간 가져오기
+  User user = await apiService.postUser(loginId, password);
+  List<String>? alarmTimes = user.alarmTimes;
+  print("debug : $alarmTimes");
+  if (alarmTimes != null) {
+    // 시간 관련 함수 사용 시 있어야 하는 코드
+    tz.initializeTimeZones();
+
+    var iosDetails = const DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    for (String alarmTime in alarmTimes) {
+      // API 응답에서 시간 추출
+      List<String> timeParts = alarmTime.split(':');
+      int hour = int.parse(timeParts[0]);
+      int minute = int.parse(timeParts[1]);
+      int second = int.parse(timeParts[2]);
+
+      var notificationTime = makeDate(hour, minute, second);
+
+      // 특정 시간 알림
+      notifications.zonedSchedule(
+        alarmTimes.indexOf(alarmTime) + 1, // 알람 고유 id
+        '정서 반복 기록 검사',
+        '검사 할 시간입니다.',
+        notificationTime,
+        NotificationDetails(iOS: iosDetails),
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+      print("Notification scheduled for $hour:$minute:$second");
+    }
+  }
 }
 
 makeDate(hour, min, sec) {

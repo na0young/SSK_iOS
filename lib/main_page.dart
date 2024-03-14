@@ -6,12 +6,12 @@ import 'package:ssk/models/esm_test_log.dart';
 import 'package:ssk/service/api_service.dart';
 import 'package:ssk/notification.dart';
 
-class MyApp extends StatelessWidget {
+class MainPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 앱 로드시 알림 초기화
     initNotification(context);
-    showNotifications2();
+    //showNotifications2();
 
     User user = User(name: "사용자");
     return MaterialApp(
@@ -31,12 +31,13 @@ class mainPage extends StatefulWidget {
 class _mainPageState extends State<mainPage> {
   bool isNotificationOn = true;
   String recentRecordTime = "";
+  //List<String> serverAlarmTimes = [];
   @override
   void initState() {
     super.initState();
     // 최근 기록 시간을 얻기 위해 API 호출
     getRecentRecordTime();
-    showNotifications2();
+    showNotifications2(widget.user.loginId!, widget.user.password!);
   }
 
   void getRecentRecordTime() async {
