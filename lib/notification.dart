@@ -1,9 +1,12 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ssk/models/user.dart';
+import 'package:ssk/models/esm_test_log.dart';
 import 'package:ssk/webview.dart';
 import 'package:ssk/service/api_service.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+
+// 알림 관련 기능
 
 final notifications = FlutterLocalNotificationsPlugin();
 
@@ -34,7 +37,7 @@ showNotification() async {
   // 알림 id, 제목, 내용
   notifications.show(
     1,
-    '정서반복기록시간',
+    '정서 반복 기록시간',
     '검사 할 시간입니다.',
     NotificationDetails(iOS: iosDetails),
   );
@@ -67,7 +70,8 @@ showNotifications2(String loginId, String password) async {
       int second = int.parse(timeParts[2]);
 
       var notificationTime = makeDate(hour, minute, second);
-
+      // checkForEsmTestLog 호출해서 검사 -> 그 뒤에 bool hasRecentEsmTestLog =
+      //    await checkForEsmTestLog(user.id!, scheduledDate); 호출해서 true면 알림 주고 , 그렇지 않으면 알림 주지 않는거
       // 특정 시간 알림
       notifications.zonedSchedule(
         alarmTimes.indexOf(alarmTime) + 1, // 알람 고유 id
@@ -94,5 +98,102 @@ makeDate(hour, min, sec) {
     return when.add(Duration(days: 1));
   } else {
     return when;
+  }
+}
+
+// 특정 시간에 알람을 스케줄링 하기 전에 esmTestLog가 있는지 확인하는 함수
+Future<bool> checkForEsmTestLog(int userId, DateTime alarmTime) async {
+  final ApiService apiService = ApiService();
+
+  // 사용자의 최근 esmTestLog 시간 불러옴
+  EsmTestLog esmTestLog = await apiService.postEsmTestLog(userId!);
+  // date와 time 속성을 사용하여 DateTime 객체를 생성
+  DateTime? esmTestLogTime;
+  if (esmTestLog.date != null && esmTestLog.time != null) {
+    esmTestLogTime = DateTime.parse("${esmTestLog.date} ${esmTestLog.time}");
+  }
+  // DateTime? esmTestLog = await apiService.postEsmTestLog(loginId, password);
+  if (esmTestLogTime != null) {
+    // 알람 시간과 esmTestLog 시간의 차이를 계산
+    Duration diff = alarmTime.difference(esmTestLogTime);
+
+    // 차이가 20분 초과라면 esmTestLog가 최근 20분내에 없는것으로 판단
+    return diff.inMinutes > 20;
+  }
+  // esmTestLogTime이 null이라면 최근 로그가 없는것으로 판단하고 true 반환
+  return true;
+}
+
+// 시간 기능 추가된 알림을 수정하여 esmTestLog 확인 로직을 포함
+void integratedNotification(String loginId, String password) async {
+  final ApiService apiService = ApiService();
+  User user = await apiService.postUser(loginId, password);
+  List<String>? alarmTimes = user.alarmTimes;
+
+  if (alarmTimes != null) {
+    tz.initializeTimeZones();
+    var iosDetails = const DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    for (String alarmTime in alarmTimes) {
+      List<String> timeParts = alarmTime.split(':');
+      int hour = int.parse(timeParts[0]);
+      int minute = int.parse(timeParts[1]);
+      int second = int.parse(timeParts[2]);
+      DateTime now = DateTime.now();
+      var scheduledDate =
+          DateTime(now.year, now.month, now.day, hour, minute, second);
+      var notificationTime = tz.TZDateTime.from(scheduledDate, tz.local);
+
+      // 알람 시간 이전 최근 20분 내에 esmTestLog가 있는지 확인
+      bool hasRecentEsmTestLog =
+          await checkForEsmTestLog(user.id!, scheduledDate);
+      if (!hasRecentEsmTestLog) {
+        var notificationTime = tz.TZDateTime.from(scheduledDate, tz.local);
+        // esmTestLog가 없다면 알람 스케줄
+        notifications.zonedSchedule(
+          alarmTimes.indexOf(alarmTime) + 1, // 알람 고유 id
+          '정서 반복 기록 검사', // 알람 제목
+          '검사 할 시간입니다.', // 알람 내용
+          notificationTime, // 알람 시간
+          NotificationDetails(iOS: iosDetails),
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+        );
+      }
+    }
+  }
+}
+
+Future<bool> shouldTriggerNotification(int userId, DateTime alarmTime) async {
+  final ApiService apiService = ApiService();
+  EsmTestLog esmTestLog = await apiService.postEsmTestLog(userId);
+
+  // esmTestLog 시간 파싱
+  DateTime? esmTestLogTime;
+  if (esmTestLog.date != "-" && esmTestLog.time != "-") {
+    esmTestLogTime = DateTime.parse("${esmTestLog.date} ${esmTestLog.time}");
+  }
+
+  if (esmTestLogTime != null) {
+    // 알람 시간과 esmTestLog 시간의 차이를 계산
+    Duration diff = alarmTime.difference(esmTestLogTime);
+
+    // esmTestLog가 최근 20분 내에 존재하면 알람을 주지 않음
+    if (diff.inMinutes <= 20) {
+      return false;
+    }
+  }
+  // esmTestLog가 없거나 20분 이전인 경우 알람을 줘야 함
+  return true;
+}
+
+void triggerNotificationIfRequired(int userId, DateTime alarmTime) async {
+  bool shouldTrigger = await shouldTriggerNotification(userId, alarmTime);
+  if (shouldTrigger) {
+    showNotification(); // 알림 발생 함수 호출
   }
 }

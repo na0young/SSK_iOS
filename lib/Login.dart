@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ssk/models/esm_test_log.dart';
 import 'package:ssk/notification.dart';
 import 'package:ssk/service/api_service.dart';
 import 'package:ssk/models/user.dart';
 import 'package:ssk/main_page.dart';
 import 'package:ssk/notification.dart';
-
-void main() {
-  runApp(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginPage(),
-    ),
-  );
-}
 
 class LoginPage extends StatefulWidget {
   @override
@@ -39,6 +32,23 @@ class _LoginPageState extends State<LoginPage> {
         // 아이디, 비밀번호 확인 및 메인 페이지로 이동
 
         if (loginId == user.loginId && password == user.password) {
+          // 로그인 상태 저장
+          final SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isLoggedIn', true);
+          // Optionally, save loginId or any other info needed
+          await prefs.setInt('id', user.id!);
+          await prefs.setString('loginId', loginId);
+          await prefs.setString('password', password);
+          await prefs.setString('name', user.name!);
+
+          // esmTestLog 조회
+          EsmTestLog esmTestLog = await apiService.postEsmTestLog(user.id!);
+          if (esmTestLog.date != "-" && esmTestLog.time != "-") {
+            // 최근 기록 시간을 SharedPreferences에 저장
+            await prefs.setString(
+                'lastRecordTime', '${esmTestLog.date} ${esmTestLog.time}');
+          }
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -85,98 +95,95 @@ class _LoginPageState extends State<LoginPage> {
     initNotification(context);
     //showNotifications2();
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(32),
-                ),
-                Container(
-                  margin: EdgeInsets.only(top: 80),
-                  child: Column(
-                    children: [
-                      Text(
-                        'SSK',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.normal,
-                        ),
-                      ),
-                      Text(
-                        '정서 반복 기록 알림',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.normal,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  margin: EdgeInsets.only(top: 50),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        child: TextField(
-                          maxLines: 1,
-                          controller: _idController,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.grey[350],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(4.0),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        height: 50,
-                        margin: EdgeInsets.only(top: 10),
-                        child: TextField(
-                          obscureText: true,
-                          maxLines: 1,
-                          controller: _pwController,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.grey[350],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(4.0),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-                Container(
-                  width: double.infinity,
-                  margin: EdgeInsets.only(top: 24),
-                  child: ElevatedButton(
-                    onPressed: _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color.fromARGB(255, 255, 111, 111),
-                    ),
-                    child: Text(
-                      "로그인",
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(32),
+              ),
+              Container(
+                margin: EdgeInsets.only(top: 80),
+                child: Column(
+                  children: [
+                    Text(
+                      'SSK',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20.0,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
+                        fontSize: 28,
+                        fontWeight: FontWeight.normal,
                       ),
+                    ),
+                    Text(
+                      '정서 반복 기록 알림',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.only(top: 50),
+                child: Column(
+                  children: [
+                    Container(
+                      height: 50,
+                      child: TextField(
+                        maxLines: 1,
+                        controller: _idController,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.grey[350],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(4.0),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      height: 50,
+                      margin: EdgeInsets.only(top: 10),
+                      child: TextField(
+                        obscureText: true,
+                        maxLines: 1,
+                        controller: _pwController,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.grey[350],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(4.0),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                margin: EdgeInsets.only(top: 24),
+                child: ElevatedButton(
+                  onPressed: _login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color.fromARGB(255, 255, 111, 111),
+                  ),
+                  child: Text(
+                    "로그인",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

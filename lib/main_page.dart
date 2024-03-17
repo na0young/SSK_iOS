@@ -7,17 +7,17 @@ import 'package:ssk/service/api_service.dart';
 import 'package:ssk/notification.dart';
 
 class MainPage extends StatelessWidget {
+  final User? user;
+
+  MainPage({this.user});
   @override
   Widget build(BuildContext context) {
     // 앱 로드시 알림 초기화
     initNotification(context);
     //showNotifications2();
 
-    User user = User(name: "사용자");
-    return MaterialApp(
-      home: mainPage(user: user),
-      debugShowCheckedModeBanner: false,
-    );
+    // User user = User(name: "사용자");
+    return mainPage(user: user!);
   }
 }
 
@@ -29,38 +29,71 @@ class mainPage extends StatefulWidget {
 }
 
 class _mainPageState extends State<mainPage> {
-  bool isNotificationOn = true;
   String recentRecordTime = "";
   //List<String> serverAlarmTimes = [];
   @override
   void initState() {
     super.initState();
     // 최근 기록 시간을 얻기 위해 API 호출
-    getRecentRecordTime();
-    showNotifications2(widget.user.loginId!, widget.user.password!);
+    recentCheckAndGetRecentRecordTime();
   }
 
-  void getRecentRecordTime() async {
-    try {
-      // ApiService 인스턴스 생성
+  void recentCheckAndGetRecentRecordTime() async {
+    if (widget.user.loginId != null && widget.user.password != null) {
+      // 알람 시간 동기화 및 스케줄링
+
+      // 여기에 최근 기록 시간을 업데이트하는 추가 로직이 필요합니다.
+      // 예를 들어, 최근 기록 시간을 조회하는 별도의 API 호출이 있을 수 있습니다.
+      // 이 예제에서는 최근 기록 시간을 가져오는 함수가 따로 있다고 가정합니다.
       final ApiService apiService = ApiService();
-      // ApiService의 postEsmTestLog 호출
       EsmTestLog esmTestLog = await apiService.postEsmTestLog(widget.user.id!);
-      // 최근 기록 시간이 있는 경우
       if (esmTestLog.date != "-" && esmTestLog.time != "-") {
         setState(() {
           recentRecordTime =
               '   최근 기록 시간 : ${esmTestLog.date} ${esmTestLog.time}';
         });
       } else {
-        // 최근 기록 시간이 없는 경우
         setState(() {
           recentRecordTime = '   최근 기록 시간 : ---';
         });
       }
-    } catch (error) {
-      // API 통신 실패시
-      print('최근 기록 시간을 가져오는 중 오류 발생: $error');
+    } else {
+      print("사용자 인증 정보가 없어 알람 시간을 동기화할 수 없습니다.");
+    }
+  }
+
+  DateTime _getAlarmDateTime(String alarmTime) {
+    List<String> timeParts = alarmTime.split(':');
+    int hour = int.parse(timeParts[0]);
+    int minute = int.parse(timeParts[1]);
+    DateTime now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, hour, minute);
+  }
+
+  void synchronizeAlarmTimes() async {
+    try {
+      final ApiService apiService = ApiService();
+      User updatedUser = await apiService.postUser(
+          widget.user.loginId!, widget.user.password!);
+
+      setState(() {
+        widget.user.alarmTimes = updatedUser.alarmTimes;
+      });
+
+      if (widget.user.alarmTimes != null) {
+        showNotifications2(widget.user.loginId!, widget.user.password!);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('알람 시간이 동기화되었습니다.'),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('알람 시간 동기화 중 오류가 발생했습니다. 다시 시도해주세요.'),
+        ),
+      );
     }
   }
 
@@ -142,26 +175,6 @@ class _mainPageState extends State<mainPage> {
                 ),
               ),
               SizedBox(height: 80),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '알림 ON/OFF',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  SizedBox(width: 8),
-                  Switch(
-                    value: isNotificationOn,
-                    onChanged: (value) {
-                      setState(() {
-                        isNotificationOn = value;
-                      });
-                    },
-                    activeColor: Color.fromARGB(255, 255, 111, 111),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
               Container(
                 width: double.infinity,
                 margin: EdgeInsets.only(top: 24),
@@ -184,6 +197,26 @@ class _mainPageState extends State<mainPage> {
                       )),
                   child: Text(
                     '기록하러 가기',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20.0,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                margin: EdgeInsets.only(top: 12),
+                child: ElevatedButton(
+                  onPressed: synchronizeAlarmTimes,
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromARGB(255, 147, 147, 147),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
+                      )),
+                  child: Text(
+                    '알람 시간 동기화',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20.0,

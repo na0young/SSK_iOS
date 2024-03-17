@@ -1,8 +1,4 @@
-/*  
- * @author Jiwon Lee
- *  API 통신 응답 시 사용하는 객체 
- * User : 사용자 정보
- */
+import 'package:shared_preferences/shared_preferences.dart';
 
 class User {
   int? id; // 사용자 식별 아이디
@@ -21,7 +17,7 @@ class User {
       name: json['name'],
       alarmTimes: json['esmAlarms'] != null
           ? List<String>.from(json['esmAlarms'])
-          : ['09:00:00', '12:00:00', '15:00:00', '18:00:00'],
+          : ['00:31:00', '00:38:00', '00:42:00', '00:47:00'], // API 통신 실패시 디폴트값
     );
   }
 
@@ -33,9 +29,17 @@ class User {
         "alarmTimes": alarmTimes,
       };
 
-  void logout() {
+  Future<void> logout() async {
     // 로그아웃을 위한 앱내변수 삭제
-    loginId = null;
-    password = null;
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool('isLoggedIn', false);
+    await prefs.remove('loginId');
+    await prefs.remove('password');
+    await prefs.remove('id');
+    await prefs.remove('name');
+    await prefs.remove('lastRecordTime');
+    this.loginId = null;
+    this.password = null;
   }
 }
