@@ -180,6 +180,7 @@ Future<bool> shouldTriggerNotification(int userId, DateTime alarmTime) async {
 
   if (esmTestLogTime != null) {
     // 알람 시간과 esmTestLog 시간의 차이를 계산
+    // 어차피 알람 시간에 호출될거라면 datetime.now랑 비교해도 될 듯
     Duration diff = alarmTime.difference(esmTestLogTime);
 
     // esmTestLog가 최근 20분 내에 존재하면 알람을 주지 않음
@@ -197,3 +198,9 @@ void triggerNotificationIfRequired(int userId, DateTime alarmTime) async {
     showNotification(); // 알림 발생 함수 호출
   }
 }
+
+// TODO
+// 알람시간 받아옴
+// 알람시간에 AppDelegate.swift에서 백그라운드 작업 되도록 함
+// 백그라운드 작업의 반환값을 받아옴(main.dart에서)
+// 그 값으로 showNotification함수 호출함

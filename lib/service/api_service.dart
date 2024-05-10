@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:ssk/models/esm_test_log.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-
 import '../models/user.dart';
 
 /*
@@ -15,7 +14,7 @@ import '../models/user.dart';
 
 class ApiService {
   final dio = Dio(BaseOptions(
-      baseUrl: 'http://210.125.94.105:9090/SSK/',
+      baseUrl: 'http://210.125.94.114:8080/PSLE/',
       headers: {
         "Content-Type": "application/json;charset=UTF-8",
         "Accept": "application/json",
@@ -44,6 +43,11 @@ class ApiService {
     // 서버 응답에서 알람시간 추출
     List<String> alarmTimes = response.data["esmAlarms"]?.cast<String>();
     User user = User.fromJson(responseData);
+    // 수정전 아래 if문은 없었음(추후 참고)
+    // 서버 응답에서 알람시간 추출 후 User 객체에 할당
+    if (response.data['esmAlarms'] != null) {
+      user.alarmTimes = List<String>.from(response.data['esmAlarms']);
+    }
 
     // TODO user.alarmTimes = alarmTimes; 알람 시간을 위한 새로운 객체를 만들기 .. ?
 

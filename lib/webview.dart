@@ -38,7 +38,7 @@ class Record extends StatelessWidget {
           this.controller = controller;
         },
         initialUrl:
-            'http://210.125.94.105:9090/SSK/doLogin?userid=$userId&userpw=$userPw',
+            'http://210.125.94.114:8080/PSLE/doLogin?userid=$userId&userpw=$userPw',
         javascriptMode: JavascriptMode.unrestricted,
       ),
     );

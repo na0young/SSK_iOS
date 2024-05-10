@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:ssk/Login.dart';
 import 'package:ssk/webview.dart';
@@ -5,6 +7,7 @@ import 'package:ssk/models/user.dart';
 import 'package:ssk/models/esm_test_log.dart';
 import 'package:ssk/service/api_service.dart';
 import 'package:ssk/notification.dart';
+import 'package:flutter/services.dart';
 
 class MainPage extends StatelessWidget {
   final User? user;
@@ -14,9 +17,6 @@ class MainPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // 앱 로드시 알림 초기화
     initNotification(context);
-    //showNotifications2();
-
-    // User user = User(name: "사용자");
     return mainPage(user: user!);
   }
 }
@@ -29,8 +29,8 @@ class mainPage extends StatefulWidget {
 }
 
 class _mainPageState extends State<mainPage> {
+  static const platform = MethodChannel('com.ssk.PSLE.dataChannel');
   String recentRecordTime = "";
-  //List<String> serverAlarmTimes = [];
   @override
   void initState() {
     super.initState();
@@ -40,11 +40,6 @@ class _mainPageState extends State<mainPage> {
 
   void recentCheckAndGetRecentRecordTime() async {
     if (widget.user.loginId != null && widget.user.password != null) {
-      // 알람 시간 동기화 및 스케줄링
-
-      // 여기에 최근 기록 시간을 업데이트하는 추가 로직이 필요합니다.
-      // 예를 들어, 최근 기록 시간을 조회하는 별도의 API 호출이 있을 수 있습니다.
-      // 이 예제에서는 최근 기록 시간을 가져오는 함수가 따로 있다고 가정합니다.
       final ApiService apiService = ApiService();
       EsmTestLog esmTestLog = await apiService.postEsmTestLog(widget.user.id!);
       if (esmTestLog.date != "-" && esmTestLog.time != "-") {
@@ -95,6 +90,10 @@ class _mainPageState extends State<mainPage> {
         ),
       );
     }
+  }
+
+  void sendAlarmTimeToNative(String alarmTime) {
+    platform.invokeMethod('scheduleAlarm', {'time': alarmTime});
   }
 
   void _logout() {
