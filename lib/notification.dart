@@ -6,6 +6,16 @@ import 'package:ssk/service/api_service.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+// ** TODO **
+// 포그라운드에서 검사함수
+// 시간 받아옴
+// 검사함수
+//     esmTestLog 불러오고 현재 시간과 비교(어차피 알람시간에 호출할거임)
+// 알람 함수 (showNotification)
+// 실행함수
+//     알람시간 스케줄링 -> 알람시간마다 검사함수 호출 -> 반환값에 따라 알람함수 호출
+// **
+
 // 알림 관련 기능
 
 final notifications = FlutterLocalNotificationsPlugin();
@@ -117,12 +127,19 @@ Future<bool> checkForEsmTestLog(int userId, DateTime alarmTime) async {
     // 알람 시간과 esmTestLog 시간의 차이를 계산
     Duration diff = alarmTime.difference(esmTestLogTime);
 
-    // 차이가 20분 초과라면 esmTestLog가 최근 20분내에 없는것으로 판단
+    // 차이가 20분 초과라면 esmTestLog가 최근 20분내에 없는것으로 판단 -> 초로 바꿈
     return diff.inMinutes > 20;
   }
   // esmTestLogTime이 null이라면 최근 로그가 없는것으로 판단하고 true 반환
   return true;
 }
+
+// 시간 받아옴
+// 검사함수
+//  esmTestLog 불러오고 현재 시간과 비교(어차피 알람시간에 호출할거임)
+// 알람 함수 (showNotification)
+// 실행함수
+//  알람시간 스케줄링 -> 알람시간마다 검사함수 호출 -> 반환값에 따라 알람함수 호출
 
 // 시간 기능 추가된 알림을 수정하여 esmTestLog 확인 로직을 포함
 void integratedNotification(String loginId, String password) async {
@@ -198,9 +215,10 @@ void triggerNotificationIfRequired(int userId, DateTime alarmTime) async {
     showNotification(); // 알림 발생 함수 호출
   }
 }
-
-// TODO
-// 알람시간 받아옴
-// 알람시간에 AppDelegate.swift에서 백그라운드 작업 되도록 함
-// 백그라운드 작업의 반환값을 받아옴(main.dart에서)
-// 그 값으로 showNotification함수 호출함
+// ** TODO **
+// 시간 받아옴
+// 검사함수
+//  esmTestLog 불러오고 현재 시간과 비교(어차피 알람시간에 호출할거임)
+// 알람 함수 (showNotification)
+// 실행함수
+//  알람시간 스케줄링 -> 알람시간마다 검사함수 호출 -> 반환값에 따라 알람함수 호출
