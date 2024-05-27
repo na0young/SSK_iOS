@@ -76,7 +76,8 @@ class _mainPageState extends State<mainPage> {
       });
 
       if (widget.user.alarmTimes != null) {
-        showNotifications2(widget.user.loginId!, widget.user.password!);
+        executeAlarm(
+            widget.user.loginId!, widget.user.password!, widget.user.id!);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('알람 시간이 동기화되었습니다.'),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ssk/models/user.dart';
 import 'package:ssk/models/esm_test_log.dart';
@@ -37,64 +38,39 @@ initNotification(context) async {
   );
 }
 
-// 2. 아래 함수 원하는 곳에서 실행하면 알림 뜸
-showNotification() async {
-  var iosDetails = DarwinNotificationDetails(
-    presentAlert: true, // 알림
-    presentBadge: true, // 뱃지(앱 아이콘 위에 숫자)
-    presentSound: true, // 소리
-  );
-  // 알림 id, 제목, 내용
-  notifications.show(
-    1,
-    '정서 반복 기록시간',
-    '검사 할 시간입니다.',
-    NotificationDetails(iOS: iosDetails),
-  );
+// 시간 받아오는 메소드
+Future<List<String>> fetchAlarmTimes(String loginId, String password) async {
+  final ApiService apiService = ApiService();
+  User user = await apiService.postUser(loginId, password);
+
+  return user.alarmTimes ?? [];
 }
 
-// 시간 기능 추가된 알림
-showNotifications2(String loginId, String password) async {
-  // API 인스턴스 생성
+// 검사함수
+Future<bool> checkForEsmTestLog(int userId) async {
   final ApiService apiService = ApiService();
 
-  // API를 통해 알람 시간 가져오기
-  User user = await apiService.postUser(loginId, password);
-  List<String>? alarmTimes = user.alarmTimes;
-  print("debug : $alarmTimes");
-  if (alarmTimes != null) {
-    // 시간 관련 함수 사용 시 있어야 하는 코드
-    tz.initializeTimeZones();
+  // 사용자의 최근 esmTestLog 시간 불러옴
+  EsmTestLog esmTestLog = await apiService.postEsmTestLog(userId!);
 
-    var iosDetails = const DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    for (String alarmTime in alarmTimes) {
-      // API 응답에서 시간 추출
-      List<String> timeParts = alarmTime.split(':');
-      int hour = int.parse(timeParts[0]);
-      int minute = int.parse(timeParts[1]);
-      int second = int.parse(timeParts[2]);
-
-      var notificationTime = makeDate(hour, minute, second);
-      // checkForEsmTestLog 호출해서 검사 -> 그 뒤에 bool hasRecentEsmTestLog =
-      //    await checkForEsmTestLog(user.id!, scheduledDate); 호출해서 true면 알림 주고 , 그렇지 않으면 알림 주지 않는거
-      // 특정 시간 알림
-      notifications.zonedSchedule(
-        alarmTimes.indexOf(alarmTime) + 1, // 알람 고유 id
-        '정서 반복 기록 검사',
-        '검사 할 시간입니다.',
-        notificationTime,
-        NotificationDetails(iOS: iosDetails),
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-      );
-      print("Notification scheduled for $hour:$minute:$second");
-    }
+  // date와 time 속성을 사용하여 DateTime 객체를 생성
+  DateTime? esmTestLogTime;
+  if (esmTestLog.date != null && esmTestLog.time != null) {
+    esmTestLogTime = DateTime.parse("${esmTestLog.date} ${esmTestLog.time}");
   }
+
+  // 현재 시간 가져옴
+  DateTime now = DateTime.now();
+
+  // DateTime? esmTestLog = await apiService.postEsmTestLog(loginId, password);
+  if (esmTestLogTime != null) {
+    // 알람 시간과 esmTestLog 시간의 차이를 계산
+    Duration diff = now.difference(esmTestLogTime);
+    // 차이가 20분 초과라면 esmTestLog가 최근 20분내에 없는것으로 판단 -> 초로 바꿈
+    return diff.inMinutes > 20;
+  }
+  // esmTestLogTime이 null이라면 최근 로그가 없는것으로 판단하고 true 반환
+  return true;
 }
 
 makeDate(hour, min, sec) {
@@ -111,114 +87,49 @@ makeDate(hour, min, sec) {
   }
 }
 
-// 특정 시간에 알람을 스케줄링 하기 전에 esmTestLog가 있는지 확인하는 함수
-Future<bool> checkForEsmTestLog(int userId, DateTime alarmTime) async {
-  final ApiService apiService = ApiService();
-
-  // 사용자의 최근 esmTestLog 시간 불러옴
-  EsmTestLog esmTestLog = await apiService.postEsmTestLog(userId!);
-  // date와 time 속성을 사용하여 DateTime 객체를 생성
-  DateTime? esmTestLogTime;
-  if (esmTestLog.date != null && esmTestLog.time != null) {
-    esmTestLogTime = DateTime.parse("${esmTestLog.date} ${esmTestLog.time}");
-  }
-  // DateTime? esmTestLog = await apiService.postEsmTestLog(loginId, password);
-  if (esmTestLogTime != null) {
-    // 알람 시간과 esmTestLog 시간의 차이를 계산
-    Duration diff = alarmTime.difference(esmTestLogTime);
-
-    // 차이가 20분 초과라면 esmTestLog가 최근 20분내에 없는것으로 판단 -> 초로 바꿈
-    return diff.inMinutes > 20;
-  }
-  // esmTestLogTime이 null이라면 최근 로그가 없는것으로 판단하고 true 반환
-  return true;
+// 알람 발생 메소드
+showNotification() async {
+  var iosDetails = DarwinNotificationDetails(
+    presentAlert: true, // 알림
+    presentBadge: true, // 뱃지(앱 아이콘 위에 숫자)
+    presentSound: true, // 소리
+  );
+  // 알림 id, 제목, 내용
+  notifications.show(
+    1,
+    '정서 반복 기록시간',
+    '검사 할 시간입니다.',
+    NotificationDetails(iOS: iosDetails),
+  );
 }
 
-// 시간 받아옴
-// 검사함수
-//  esmTestLog 불러오고 현재 시간과 비교(어차피 알람시간에 호출할거임)
-// 알람 함수 (showNotification)
-// 실행함수
-//  알람시간 스케줄링 -> 알람시간마다 검사함수 호출 -> 반환값에 따라 알람함수 호출
+// 알람 실행 함수
+Future<void> executeAlarm(String loginId, String password, int userId) async {
+  List<String> alarmTimes = await fetchAlarmTimes(loginId, password);
+  tz.initializeTimeZones();
+  var koreaTimeZone = tz.getLocation("Asia/Seoul");
 
-// 시간 기능 추가된 알림을 수정하여 esmTestLog 확인 로직을 포함
-void integratedNotification(String loginId, String password) async {
-  final ApiService apiService = ApiService();
-  User user = await apiService.postUser(loginId, password);
-  List<String>? alarmTimes = user.alarmTimes;
+  for (String time in alarmTimes) {
+    DateTime scheduledTime = DateTime.parse(time);
+    tz.TZDateTime tzScheduledTime =
+        tz.TZDateTime.from(scheduledTime, koreaTimeZone);
+    DateTime now = DateTime.now();
+    tz.TZDateTime tzNow = tz.TZDateTime.from(now, koreaTimeZone);
 
-  if (alarmTimes != null) {
-    tz.initializeTimeZones();
-    var iosDetails = const DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+    // 계산된 delay가 음수이면 이미 지난 시간이므로 타이머 설정을 건너뛴다.
+    if (tzScheduledTime.isAfter(tzNow)) {
+      Duration delay = tzScheduledTime.difference(tzNow);
+      // Timer를 설정하여 delay 후에 로직을 실행
+      Timer(delay, () async {
+        // 여기서 검사 함수 호출
+        bool shouldTrigger =
+            await checkForEsmTestLog(userId); // Example user ID
 
-    for (String alarmTime in alarmTimes) {
-      List<String> timeParts = alarmTime.split(':');
-      int hour = int.parse(timeParts[0]);
-      int minute = int.parse(timeParts[1]);
-      int second = int.parse(timeParts[2]);
-      DateTime now = DateTime.now();
-      var scheduledDate =
-          DateTime(now.year, now.month, now.day, hour, minute, second);
-      var notificationTime = tz.TZDateTime.from(scheduledDate, tz.local);
-
-      // 알람 시간 이전 최근 20분 내에 esmTestLog가 있는지 확인
-      bool hasRecentEsmTestLog =
-          await checkForEsmTestLog(user.id!, scheduledDate);
-      if (!hasRecentEsmTestLog) {
-        var notificationTime = tz.TZDateTime.from(scheduledDate, tz.local);
-        // esmTestLog가 없다면 알람 스케줄
-        notifications.zonedSchedule(
-          alarmTimes.indexOf(alarmTime) + 1, // 알람 고유 id
-          '정서 반복 기록 검사', // 알람 제목
-          '검사 할 시간입니다.', // 알람 내용
-          notificationTime, // 알람 시간
-          NotificationDetails(iOS: iosDetails),
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-        );
-      }
+        if (shouldTrigger) {
+          // 조건에 따라 알람 발생
+          await showNotification();
+        }
+      });
     }
   }
 }
-
-Future<bool> shouldTriggerNotification(int userId, DateTime alarmTime) async {
-  final ApiService apiService = ApiService();
-  EsmTestLog esmTestLog = await apiService.postEsmTestLog(userId);
-
-  // esmTestLog 시간 파싱
-  DateTime? esmTestLogTime;
-  if (esmTestLog.date != "-" && esmTestLog.time != "-") {
-    esmTestLogTime = DateTime.parse("${esmTestLog.date} ${esmTestLog.time}");
-  }
-
-  if (esmTestLogTime != null) {
-    // 알람 시간과 esmTestLog 시간의 차이를 계산
-    // 어차피 알람 시간에 호출될거라면 datetime.now랑 비교해도 될 듯
-    Duration diff = alarmTime.difference(esmTestLogTime);
-
-    // esmTestLog가 최근 20분 내에 존재하면 알람을 주지 않음
-    if (diff.inMinutes <= 20) {
-      return false;
-    }
-  }
-  // esmTestLog가 없거나 20분 이전인 경우 알람을 줘야 함
-  return true;
-}
-
-void triggerNotificationIfRequired(int userId, DateTime alarmTime) async {
-  bool shouldTrigger = await shouldTriggerNotification(userId, alarmTime);
-  if (shouldTrigger) {
-    showNotification(); // 알림 발생 함수 호출
-  }
-}
-// ** TODO **
-// 시간 받아옴
-// 검사함수
-//  esmTestLog 불러오고 현재 시간과 비교(어차피 알람시간에 호출할거임)
-// 알람 함수 (showNotification)
-// 실행함수
-//  알람시간 스케줄링 -> 알람시간마다 검사함수 호출 -> 반환값에 따라 알람함수 호출
